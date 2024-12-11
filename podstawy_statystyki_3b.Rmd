@@ -1,0 +1,78 @@
+
+Analiza procentowych zmian najniższych cen akcji spółki BEST i testowanie rozkładu normalnego
+
+Dane spółki BEST:
+```{r}
+  df_BEST = read.csv('BEST.mst')
+  names(df_BEST) = c('ticker', 'date', 'open', 'high', 'low', 'close','vol')
+  df_BEST$date = as.Date.character(df_BEST$date, format ='%Y%m%d')
+  df_BEST = df_BEST[which(df_BEST$date >= '2023-05-12' & df_BEST$date <= '2024-05-12'),]
+```
+
+
+Wartości procentowych zmian najniższych cen w poszczególnych dniach w ciągu ostatniego roku, histogram i funkcja gęstości prawdopodobieństwa rozkładu normalnego.
+```{r}
+  df_BEST$low_ch = with(df_BEST, c(NA, 100*diff(low)/low[-length(low)]))
+
+  hist(df_BEST$low_ch, breaks = 50, prob = T, 
+    xlab = 'Zmiana najniższych cen [%] ',
+    ylab = 'Częstość występowania',
+    main = paste('Histogram procentowych zmian najniższych cen', 'BEST'),
+                 
+    xlim = c(-10, 15),  # Ustawienie zakresu osi X 
+    ylim = c(0, 1))  # Ustawienie zakresu osi Y 
+  
+  grid()
+```
+
+```{r}
+  m_best = mean(df_BEST$low_ch, na.rm = T)
+  m_best
+  war = var(df_BEST$low_ch, na.rm = T)
+  war
+  sd_best = sd(df_BEST$low_ch, na.rm = T)
+  sd_best
+``` 
+  
+```{r}  
+  min_x = min(df_BEST$low_ch, na.rm = T)
+  max_x = max(df_BEST$low_ch, na.rm = T)
+
+  hist(df_BEST$low_ch, breaks = 50, prob = T, 
+      xlab = 'Zmiana najniższych cen [%] ', 
+      ylab = 'Częstość występowania',
+      main = 'Histogram i gęstość prawdopodobieństwa',
+      xlim = c(min_x, 15), 
+      ylim = c(0, 1))
+  curve(dnorm(x, mean = m_best, sd = sqrt(war)), add = TRUE, col = 'red', from = min_x, to = 15)
+  grid()
+```
+
+
+Weryfikacja przy poziomie istotności $\alpha = 0.05$ hipotezy, że procentowe zmiany najniższych cen w poszczególnych dniach w ciągu ostatniego roku mają rozkład normalny.
+```{r}
+  library(moments)
+
+  # Test D’Agostino:
+  a_best = agostino.test(df_BEST$low_ch)
+  print("Test D’Agostino:")
+  print(a_best)
+  
+  # Test Anscombe-Glynn-a na kurtozę:
+  ag_best = anscombe.test(df_BEST$low_ch)
+  print("Test Anscombe-Glynn-a:")
+  print(ag_best)
+  
+  # Test Jarque-Bera:
+  j_best = jarque.test(df_BEST$low_ch)
+  print("Test Jarque-Bera:")
+  print(j_best)
+  
+  # Test Shapiro-Wilka:
+  sh_best = shapiro.test(df_BEST$low_ch)
+  print("Test Shapiro-Wilka:")
+  print(sh_best) 
+  
+```
+
+Testy mają wartość p znacząco poniżej poziomu istotności $\alpha = 0.05$ co sugeruje odrzucenie hipotezy zerowej - dane nie pochodzą z rozkładu normalnego. 

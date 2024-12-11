@@ -1,0 +1,138 @@
+
+Analiza temperatury ciała mężczyzn i kobiet – testy statystyczne i porównanie rozkładów
+
+Dane:
+```{r}
+  dane <- read.table("tempciala.txt", header = TRUE, sep = ",")
+
+  dane_M = dane[dane$płeć == 1, "temperatura"]
+  dane_K = dane[dane$płeć == 2, "temperatura"]
+``` 
+
+Średnia i odchylenie: 
+```{r}
+mean_M = mean(dane_M)
+mean_K = mean(dane_K)
+
+sd_M = sd(dane_M)
+sd_K = sd(dane_K)
+
+wyniki1 <- data.frame(
+  "Płeć" = c("mężczyżni","kobiety"),
+  "Średnia temperatura" = c(mean_M, mean_K),
+  "Odchylenie standardowe temperatury" = c(sd_M, sd_K)
+)
+print(wyniki1)
+``` 
+
+Mężczyżni:
+```{r}
+  n = 65
+  mi_0 = 36.6; alfa = 0.05 
+  
+  T1 = abs(mean_M - mi_0)*sqrt(n)/sd_M   # T = statystyka testowa
+  c1 = qt(1 - alfa/2, df = n-1)          # c = wartość krytyczna , df = liczba stopni swobody
+  p_val1 = 2*(1 - pt(T1, df = n-1))      # p_val = wartość p
+
+  print(T1)
+  print(c1)
+  print(p_val1)
+``` 
+
+Wartość statystyki T = `r round(T1,4)`. 
+
+Wartość krytyczna dla poziomu istotności $\alpha$ = `r alfa` wynosi c = `r round(c1,4)`.
+
+p-wartość = `r round(p_val1,4)`.
+
+
+Kobiety:
+```{r}
+  n = 65
+  mi_0 = 36.6; alfa = 0.05        
+  
+  T2 = abs(mean_K - mi_0)*sqrt(n)/sd_K 
+  c2 = qt(1 - alfa/2, df = n-1) 
+  p_val2 = 2*(1 - pt(T2, df = n-1)) 
+
+  print(T2)
+  print(c2)
+  print(p_val2)
+``` 
+Wartość statystyki T = `r round(T2,4)`. 
+
+Wartość krytyczna dla poziomu istotności $\alpha$ = `r alfa` wynosi c = `r round(c2,4)`.
+
+p-wartość = `r round(p_val2,4)`.
+
+
+Wykorzystanie funkcji t.test: 
+```{r}
+TM = t.test(dane_M, mu = mi_0, alternative = "two.sided") 
+TK = t.test(dane_K, mu = mi_0, alternative = "two.sided") 
+
+print("Test dla mężczyzn:")
+TM
+print("Test dla kobiet:")
+TK
+``` 
+
+Mężczyźni: 
+Wartość p = 0.01097 jest mniejsze od $\alpha$ = 0.05 co oznacze, że odrzucamy hipotezę zerową. 
+
+Kobiety: 
+Wartość p = 3.985e-07 jest mniejsze od $\alpha$ = 0.05 co oznacze, że odrzucamy hipotezę zerową. 
+
+```{r}
+wyniki2 <- data.frame(
+  "Płeć" = c("mężczyżni","kobiety"),
+  "statystyka testowa" = c(T1, T2),
+  "wartość krytyczna" = c(c1, c2),
+  "wartość p" = c(p_val1, p_val2)  
+)
+print(wyniki2)
+```
+
+
+Testy normalności dla zarejestrowanych temperatur:
+a - Test Kołmogorowa-Smirnowa:
+```{r}
+KS_M = ks.test(dane_M, 'pnorm', mean = mean_M, sd = sd_M)
+KS_K = ks.test(dane_K, 'pnorm', mean = mean_K, sd = sd_K)
+KS_M
+KS_K
+```
+
+b - Test D’Agostino na skośność:
+```{r}
+library(moments)
+a_M = agostino.test(dane_M)
+a_K = agostino.test(dane_K)
+a_M
+a_K
+```
+
+c - Test Anscombe-Glynn-a na kurtozę:
+```{r}
+ag_M = anscombe.test(dane_M)
+ag_K = anscombe.test(dane_K)
+ag_M
+ag_K
+```
+
+d - Test Jarque-Bera:
+```{r}
+j_M = jarque.test(dane_M)
+j_K = jarque.test(dane_K)
+j_M
+j_K
+
+```
+
+e - Test Shapiro-Wilka:
+```{r}
+sh_M = shapiro.test(dane_M)
+sh_K = shapiro.test(dane_K) 
+sh_M
+sh_K
+```

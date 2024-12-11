@@ -1,0 +1,66 @@
+Analiza kursu waluty w okresie od grudnia 2023 do maja 2024
+
+Dane:
+```{r}
+if(!file.exists('mstnbp.zip')) {
+  download.file('https://info.bossa.pl/pub/metastock/waluty/mstnbp.zip','mstnbp.zip')
+}
+```
+
+```{r}
+  unzip('mstnbp.zip', 'CZK.mst')
+  df_CZK = read.csv('CZK.mst')
+
+  df_CZK$X.DTYYYYMMDD. = as.Date.character(df_CZK$X.DTYYYYMMDD., format ='%Y%m%d')
+  
+  df_CZK1 = df_CZK[which(df_CZK$X.DTYYYYMMDD. >= '2023-12-01' & df_CZK$X.DTYYYYMMDD. <= '2023-12-31'),]
+  df_CZK2 = df_CZK[which(df_CZK$X.DTYYYYMMDD. >= '2024-01-01' & df_CZK$X.DTYYYYMMDD. <= '2024-01-31'),]
+  df_CZK3 = df_CZK[which(df_CZK$X.DTYYYYMMDD. >= '2024-02-01' & df_CZK$X.DTYYYYMMDD. <= '2024-02-29'),]
+  df_CZK4 = df_CZK[which(df_CZK$X.DTYYYYMMDD. >= '2024-03-01' & df_CZK$X.DTYYYYMMDD. <= '2024-03-31'),]
+  df_CZK5 = df_CZK[which(df_CZK$X.DTYYYYMMDD. >= '2024-04-01' & df_CZK$X.DTYYYYMMDD. <= '2024-04-30'),]
+  df_CZK6 = df_CZK[which(df_CZK$X.DTYYYYMMDD. >= '2024-05-01' & df_CZK$X.DTYYYYMMDD. <= '2024-05-31'),]
+```
+  
+Wykres pudełkowy ilustrujący rozkłady kursów dla analizowanych miesięcy:
+```{r}
+  boxplot(df_CZK1$X.CLOSE., df_CZK2$X.CLOSE., df_CZK3$X.CLOSE., df_CZK4$X.CLOSE., df_CZK5$X.CLOSE., df_CZK6$X.CLOSE.)
+  grid()
+```
+Testy przy założeniu normalnośći oraz bez tego założenia.
+```{r}
+dane_anova_z = data.frame( 
+  dane = c(df_CZK1$X.CLOSE., df_CZK2$X.CLOSE., df_CZK3$X.CLOSE., df_CZK4$X.CLOSE., df_CZK5$X.CLOSE., df_CZK6$X.CLOSE.),
+  proba = rep(c("1.gru", "2.sty", "3.luty", "4.mar", "5.kwie", "6.maj"), 
+              times = c(length(df_CZK1$X.CLOSE.), length(df_CZK2$X.CLOSE.), length(df_CZK3$X.CLOSE.),
+                        length(df_CZK4$X.CLOSE.), length(df_CZK5$X.CLOSE.), length(df_CZK6$X.CLOSE.)))
+)
+
+```
+
+```{r}
+aov_wyniki = aov(dane~proba, data = dane_anova_z)
+summary(aov_wyniki)
+```
+```{r}
+  bartlett.test(dane~proba, data = dane_anova_z)
+```
+```{r}
+  kruskal.test(dane~proba, dane_anova_z)
+```
+
+Analiza odstępstw od średniej metodami Tukeya i Bonferroniego
+```{r}
+  Tukey_wyniki = TukeyHSD(aov_wyniki)
+  print(Tukey_wyniki)
+```
+
+```{r}
+  plot(Tukey_wyniki)
+```
+
+```{r}
+  pairwise_none = pairwise.t.test(dane_anova_z$dane, dane_anova_z$proba, p.adj = 'none')
+  pairwise_none
+  pairwise_bonf = pairwise.t.test(dane_anova_z$dane, dane_anova_z$proba, p.adj = 'bonf')
+  pairwise_bonf
+```

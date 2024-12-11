@@ -1,0 +1,81 @@
+Analiza zależności między wydatkami na reklamę a wartością sprzedaży
+
+Dane
+```{r}
+  sprzedaz = read.csv('sprzedaz.txt')
+  names(sprzedaz) = c('Firma','reklama', 'przychód')
+  
+  sprzedaz$reklama = sprzedaz$reklama /1000
+  head(sprzedaz)
+```
+
+Zależność pomiędzy wartością sprzedaży a wydatkami na reklamę
+```{r}
+  sprzedaz_df = subset(sprzedaz, select = c('reklama', 'przychód'))
+  names(sprzedaz_df) = c('reklama','przychód')
+
+  lm_sprzedaz = lm(przychód ~ reklama, data = sprzedaz_df)
+  summary(lm_sprzedaz)
+```
+
+```{r}
+  plot(sprzedaz$reklama, sprzedaz$przychód,
+       main = "Zależność sprzedaży od wydatków na reklamę",
+       xlab = "Wydatki na reklamę",
+       ylab = "Sprzedaż",
+       pch = 20,
+       col = "blue")
+  
+    abline(lm_sprzedaz, col = "red", lwd = 2)
+    
+  grid()
+```
+
+Prognozowane wartości sprzedaży przy wydatkach: 300, 500, 700 tys. zł.
+```{r}
+  pred_res = predict(lm_sprzedaz, newdata = data.frame(reklama = c(300, 500, 700)), se.fit = TRUE)
+  print("Prognozowane wartości sprzedaży:")
+  print(pred_res)
+```
+
+Odchylenie standardowe błędu z jakim wyznaczono prognozowane wartości sprzedaży dla poszczególnych wartości wydatków na reklamę.
+```{r}
+  print("Odchylenie standardowe błędu predykcji:")
+  print(pred_res$se.fit)
+```
+Odchylenie standardowe błędu prognozy wynosi `r round(pred_res$se.fit,2)`.
+
+
+
+Porównanie wartości współczynnika determinacji $R^2$ dla dwóch modeli: regresji liniowej oraz zależności kwadratowej.
+```{r}
+  lm_sprzedaz = lm(przychód ~ reklama, data = sprzedaz_df)
+  summary(lm_sprzedaz)
+```
+
+```{r}
+  lm_sprzedaz2 = lm(przychód~I(reklama^2) - 1, sprzedaz_df)
+  summary(lm_sprzedaz2)
+```
+
+```{r}
+  R2 = summary(lm_sprzedaz)$r.squared
+  R2_2 = summary(lm_sprzedaz2)$r.squared
+
+  plot(przychód ~ reklama, sprzedaz_df,
+     main = "Zależność sprzedaży od wydatków na reklamę",
+     xlab = "Wydatki na reklamę",
+     ylab = "Sprzedaż",
+     pch = 20,
+     col = "blue")
+  abline(lm_sprzedaz, col = 'red')
+
+  reklama = seq(min(sprzedaz_df$reklama), max(sprzedaz_df$reklama), by = 0.2)
+  DF_przewidywania = data.frame(reklama = reklama)
+  DF_przewidywania$przychód = predict(lm_sprzedaz2, DF_przewidywania)
+  lines(przychód ~ reklama, DF_przewidywania, col = 'green')
+  
+  grid()
+  legend('topleft', c('liniowa', 'kwadratowa'), col = c('red', 'green'), lwd = 2)
+```
+Zależność kwadratowa nie byłaby lepszym modelem zależności między wartością wydatków na reklamę a wartością sprzedaży.

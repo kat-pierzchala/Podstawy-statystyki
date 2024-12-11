@@ -1,0 +1,73 @@
+Analiza kursów akcji spółek ONDE oraz BEST w okresie 15 września 2022 – 15 marca 2024
+
+Dane spółki ONDE oraz BEST:
+```{r}
+  unzip('mstall.zip', 'ONDE.mst')
+  unzip('mstall.zip', 'BEST.mst')
+  df_ONDE = read.csv('ONDE.mst')
+  df_BEST = read.csv('BEST.mst')
+
+  names(df_ONDE) = c('ticker', 'date', 'open', 'high', 'low', 'close','vol')
+  names(df_BEST) = c('ticker', 'date', 'open', 'high', 'low', 'close','vol')
+
+  df_ONDE$date = as.Date.character(df_ONDE$date, format ='%Y%m%d')
+  df_BEST$date = as.Date.character(df_BEST$date, format ='%Y%m%d')
+
+  df_ONDE = df_ONDE[which(df_ONDE$date >= '2022-09-15' & df_ONDE$date <= '2024-03-15'),]
+  df_BEST = df_BEST[which(df_BEST$date >= '2022-09-15' & df_BEST$date <= '2024-03-15'),]
+```
+
+Wykres kursów zamknięcia w zależności od daty:
+```{r}
+  plot(close ~ date, df_ONDE, type = 'l', col = 'blue',
+      xlab = 'Data', ylab = 'Kurs zamknięcia [zł]', main = 'ONDE' )
+  grid()
+  
+  plot(close ~ date, df_BEST, type = 'l', col = 'green',
+      xlab = 'Data', ylab = 'Kurs zamknięcia [zł]', main = 'BEST' )
+  grid()
+```
+Wykres procentowych zmian kursów zamknięcia w zależności od daty:
+```{r}
+  df_ONDE$close_ch= with(df_ONDE, c(NA, 100*diff(close)/close[-length(close)]))
+  plot(close_ch ~ date, df_ONDE, type = 'l', col = 'blue', xlab = 'Data', 
+     ylab = 'Procentowa zmiana kursu zamknięcia [%]', main = 'ONDE')
+  grid()
+
+  df_BEST$close_ch= with(df_BEST, c(NA, 100*diff(close)/close[-length(close)]))
+  plot(close_ch ~ date, df_BEST, type = 'l', col = 'green', xlab = 'Data', 
+     ylab = 'Procentowa zmiana kursu zamknięcia [%]', main = 'BEST')
+  grid()
+```
+
+Histogram procentowych zmian kursów zamknięcia:
+```{r}
+  hist(df_ONDE$close_ch, breaks = 50, prob = T, # T = TRUE
+    xlab = 'Zmiana kursu zamknięcia [%] ',
+    ylab = 'Częstość występowania',
+    main = paste('Histogram procentowych zmian kursu zamknięcia', 'ONDE'),
+
+    xlim = c(-10, 25), 
+    ylim = c(0, 1))
+  grid()
+
+  hist(df_BEST$close_ch, breaks = 50, prob = T, # T = TRUE
+    xlab = 'Zmiana kursu zamknięcia [%] ',
+    ylab = 'Częstość występowania',
+    main = paste('Histogram procentowych zmian kursu zamknięcia', 'BEST'),
+                 
+    xlim = c(-10, 25),
+    ylim = c(0, 1))
+  
+  grid()
+```
+
+Wykresy pudełkowe zmian kursów zamknięcia:
+```{r}
+  df_all <- rbind(df_ONDE, df_BEST)
+  
+  boxplot(close_ch ~ ticker, df_all, col = c('green', 'blue'),
+        xlab = 'SPÓŁKA', ylab = 'Zmiana kursu zamknięcia [%]',
+        main = 'Porównanie zmian kursu zamknięcia między BEST i ONDE')
+grid()
+```

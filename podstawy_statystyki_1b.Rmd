@@ -1,0 +1,79 @@
+Analiza danych dotyczących liczby katastrof lotniczych na przestrzeni lat.
+
+Dane dotyczące liczby katastrof lotniczych:
+```{r}
+  katastrofy = read.csv('crashes.csv')
+  katastrofy$Year = strftime(as.Date(katastrofy$Date, '%m/%d/%Y'), '%Y')
+  katastrofy$Month = strftime(as.Date(katastrofy$Date, '%m/%d/%Y'), '%m')
+  katastrofy$Weekday = strftime(as.Date(katastrofy$Date, '%m/%d/%Y'), '%d')
+  katastrofy$DayOfMonth = strftime(as.Date(katastrofy$Date, '%m/%d/%Y'), '%d')
+```
+
+Wykres liczby katastrof lotnicznych w poszczególnych miesiącach roku (stydzeń - grudzień):
+```{r}
+  par(mar = c(4, 5, 4, 0))
+  miesiace <- c("Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+              "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień")
+  plot(table(katastrofy$Month), type = 'h', col = 'blue', xlab = 'Miesiąc', 
+  ylab = 'Liczba katastrof', main = 'Liczba katastrof w poszczególnych miesiącach',
+  
+  lwd = 8, xaxt = 'n')
+  axis(side = 1, at = 1:12, labels = miesiace[1:12], cex.axis = 0.56) 
+grid()
+```
+
+Wykres liczby katastrof lotnicznych w poszczególnych dniach miesiąca (1 - 31):
+```{r}
+  par(mar = c(4, 5, 4, 0))  
+  plot(table(katastrofy$DayOfMonth), type = 'h', col = 'green', xlab = 'Dzień miesiąca', 
+      ylab = 'Liczba katastrof', main = 'Liczba katastrof w poszczególnych dniach miesiąca',
+  
+      lwd = 5, 
+      xlim = c(1, 31), 
+      ylim = c(0, 250),
+      cex.axis = 0.56
+      )
+grid()
+```
+
+Wykres liczby katastrof lotnicznych w poszczególnych dniach tygodnia (weekdays()):
+```{r}
+  par(mar = c(4, 5, 4, 0)) 
+  dniT <- c("Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela")
+
+  plot(table(katastrofy$Weekday), type = 'h', col = 'orange', xlab = 'Dzień tygodnia', 
+      ylab = 'Liczba katastrof', main = 'Liczba katastrof w poszczególnych dniach tygodnia',
+  
+      lwd = 15, xaxt = 'n',
+      xlim = c(1, 7), 
+      ylim = c(0, 250),
+      )
+  
+      axis(side = 1, at = 1:7, labels = dniT, cex.axis = 0.8)
+grid()
+```
+
+Liczba osób, które przeżyły katastrofy:
+```{r}
+  Ocalali_agr = aggregate((Aboard - Fatalities) ~ Year, katastrofy, FUN = sum)
+
+  plot(Ocalali_agr, type = 'h', col = 'yellow',xlab = 'Rok', 
+       ylab = 'Liczba ocalałych', main = 'Liczba ocalałych w katastrofach wg lat:' )
+  grid()
+```
+
+Odsetek osób, które przeżyły katastrofy.
+```{r}
+katastrofy$ocalali <- katastrofy$Aboard - katastrofy$Fatalities
+Ocalali_agr <- aggregate(ocalali ~ Year, katastrofy, FUN = sum)
+Pasazerowie_agr <- aggregate(Aboard ~ Year, katastrofy, FUN = sum)
+
+df_Ocalali_agr <- merge(Ocalali_agr, Pasazerowie_agr, by = "Year", suffixes = c("_ocalali", "_Aboard"))
+df_Ocalali_agr$Ocalali_proc <- (df_Ocalali_agr$ocalali / df_Ocalali_agr$Aboard) * 100
+    
+plot(df_Ocalali_agr$Year, df_Ocalali_agr$Ocalali_proc, type = 'h', col = 'pink',xlab = 'Rok', 
+     ylab = 'Odsetek ocalałych', main = 'Liczba ocalałych w katastrofach wg lat [%]',
+    xlim = c(1916, 2010), 
+    ylim = c(0, 100))
+grid()
+```
